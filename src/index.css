@@ -59,8 +59,9 @@
     display: block;
   }
 
+  /* Restored and enhanced key styles */
   .key {
-    @apply relative flex items-center justify-center w-16 h-20 mx-1 bg-white text-black rounded-md 
+    @apply relative flex items-center justify-center w-14 h-16 mx-1 bg-white/80 text-black rounded-md 
     border border-gray-300 cursor-pointer select-none 
     transition-all duration-100 ease-in-out shadow-md;
   }

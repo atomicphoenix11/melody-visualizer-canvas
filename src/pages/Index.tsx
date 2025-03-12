@@ -28,10 +28,12 @@ const Index = () => {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-black">
-      {/* Canvas Visualizer */}
-      <Visualizer analyserData={analyserData} activeVisualizer={activeVisualizer} />
+      {/* Canvas Visualizer - positioned below everything else */}
+      <div className="absolute inset-0 z-0">
+        <Visualizer analyserData={analyserData} activeVisualizer={activeVisualizer} />
+      </div>
       
-      {/* Controls and UI */}
+      {/* Controls and UI - positioned above the visualizer */}
       <div className="relative z-20">
         <Title />
         <Controls 
@@ -40,8 +42,10 @@ const Index = () => {
         />
       </div>
       
-      {/* Audio Engine and Virtual Keyboard */}
-      <AudioEngine onAudioProcess={handleAudioProcess} />
+      {/* Audio Engine and Virtual Keyboard - positioned at the bottom but above the visualizer */}
+      <div className="relative z-10">
+        <AudioEngine onAudioProcess={handleAudioProcess} />
+      </div>
     </div>
   );
 };

@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from 'react';
 
 interface AudioEngineProps {
@@ -35,29 +36,28 @@ const AudioEngine: React.FC<AudioEngineProps> = ({ onAudioProcess }) => {
       const bufferLength = analyserRef.current.frequencyBinCount;
       dataArrayRef.current = new Uint8Array(bufferLength);
       
-      analyserRef.current.connect(audioContextRef.current.destination);
-      
+      // Set initial values to ensure visualizer has data
       if (dataArrayRef.current) {
         for (let i = 0; i < dataArrayRef.current.length; i++) {
-          dataArrayRef.current[i] = 50;
+          dataArrayRef.current[i] = Math.random() * 50; // Add some random initial data
         }
         onAudioProcess(dataArrayRef.current);
       }
+      
+      analyserRef.current.connect(audioContextRef.current.destination);
     };
 
+    initAudio(); // Initialize immediately
+
     const handleFirstInteraction = () => {
-      if (!audioContextRef.current) {
-        initAudio();
+      if (audioContextRef.current?.state === 'suspended') {
+        audioContextRef.current.resume();
       }
-      window.removeEventListener('click', handleFirstInteraction);
-      window.removeEventListener('keydown', handleFirstInteraction);
     };
 
     window.addEventListener('click', handleFirstInteraction);
     window.addEventListener('keydown', handleFirstInteraction);
     
-    initAudio();
-
     return () => {
       window.removeEventListener('click', handleFirstInteraction);
       window.removeEventListener('keydown', handleFirstInteraction);
@@ -76,6 +76,12 @@ const AudioEngine: React.FC<AudioEngineProps> = ({ onAudioProcess }) => {
     const updateAnalyser = () => {
       if (analyserRef.current && dataArrayRef.current) {
         analyserRef.current.getByteFrequencyData(dataArrayRef.current);
+        
+        // Amplify the data to make visualizations more pronounced
+        for (let i = 0; i < dataArrayRef.current.length; i++) {
+          dataArrayRef.current[i] = Math.min(255, dataArrayRef.current[i] * 1.5);
+        }
+        
         onAudioProcess(dataArrayRef.current);
       }
       frameRef.current = requestAnimationFrame(updateAnalyser);
@@ -119,16 +125,20 @@ const AudioEngine: React.FC<AudioEngineProps> = ({ onAudioProcess }) => {
         
         oscillator.start();
         gainNode.gain.setValueAtTime(0, audioContextRef.current.currentTime);
-        gainNode.gain.linearRampToValueAtTime(0.5, audioContextRef.current.currentTime + 0.1);
+        gainNode.gain.linearRampToValueAtTime(0.8, audioContextRef.current.currentTime + 0.1);
         
         oscillatorsRef.current.set(key, oscillator);
         gainsRef.current.set(key, gainNode);
         
         setActiveKeys(new Set([...activeKeys, key]));
         
+        // Boost the data for visualization when a key is pressed
         if (dataArrayRef.current) {
           const index = Math.floor(NOTES[key as keyof typeof NOTES] % dataArrayRef.current.length);
-          dataArrayRef.current[index] = 200;
+          for (let i = 0; i < 10; i++) {
+            const idx = (index + i) % dataArrayRef.current.length;
+            dataArrayRef.current[idx] = 230;
+          }
           onAudioProcess(dataArrayRef.current);
         }
       }
@@ -172,7 +182,7 @@ const AudioEngine: React.FC<AudioEngineProps> = ({ onAudioProcess }) => {
   }, [activeKeys, onAudioProcess]);
 
   return (
-    <div className="fixed bottom-8 left-0 w-full flex items-center justify-center">
+    <div className="fixed bottom-8 left-0 w-full flex items-center justify-center z-30">
       <div className="bg-black/60 backdrop-blur-md p-4 rounded-xl flex">
         {Object.entries(NOTES).map(([key, _]) => (
           <div 
