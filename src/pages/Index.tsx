@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import AudioEngine from '@/components/AudioEngine';
 import Visualizer from '@/components/Visualizer';
 import Controls from '@/components/Controls';
@@ -9,13 +9,22 @@ const Index = () => {
   const [analyserData, setAnalyserData] = useState<Uint8Array | null>(null);
   const [activeVisualizer, setActiveVisualizer] = useState<string>('bars');
 
+  // Callback to receive audio data from the AudioEngine
   const handleAudioProcess = useCallback((data: Uint8Array) => {
-    setAnalyserData(new Uint8Array(data));
+    setAnalyserData(data.slice()); // Create a copy of the data to ensure reactivity
   }, []);
 
   const handleChangeVisualizer = useCallback((visualizer: string) => {
+    console.log("Changing visualizer to:", visualizer);
     setActiveVisualizer(visualizer);
   }, []);
+
+  // Debug effect to confirm data is being received
+  useEffect(() => {
+    if (analyserData) {
+      console.log("Received audio data, length:", analyserData.length);
+    }
+  }, [analyserData]);
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-black">

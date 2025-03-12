@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface VisualizerProps {
@@ -11,6 +10,7 @@ const Visualizer: React.FC<VisualizerProps> = ({ analyserData, activeVisualizer 
   const [dimensions, setDimensions] = useState({ width: window.innerWidth, height: window.innerHeight });
   const particlesRef = useRef<any[]>([]);
   const colorIndex = useRef(0);
+  const initializedRef = useRef(false);
 
   // Resize handler
   useEffect(() => {
@@ -38,6 +38,28 @@ const Visualizer: React.FC<VisualizerProps> = ({ analyserData, activeVisualizer 
       }));
     }
   }, [activeVisualizer, dimensions]);
+
+  // Initialize the canvas with some default visuals
+  useEffect(() => {
+    if (!initializedRef.current && canvasRef.current) {
+      const ctx = canvasRef.current.getContext('2d');
+      if (ctx) {
+        // Draw initial state with default values
+        const defaultData = new Uint8Array(128);
+        for (let i = 0; i < defaultData.length; i++) {
+          defaultData[i] = Math.random() * 50; // Some random initial values
+        }
+        
+        // Clear canvas with dark background
+        ctx.fillStyle = 'rgb(0, 0, 0)';
+        ctx.fillRect(0, 0, dimensions.width, dimensions.height);
+        
+        // Draw a starter visualization
+        drawBars(ctx, defaultData);
+        initializedRef.current = true;
+      }
+    }
+  }, [dimensions]);
 
   // Color palette for visualizers
   const getColor = useCallback((index: number, total: number) => {
@@ -76,9 +98,15 @@ const Visualizer: React.FC<VisualizerProps> = ({ analyserData, activeVisualizer 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Clear canvas with a semi-transparent background for trail effect
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'; // Darker background for better contrast
+    // Clear canvas with a solid black background first
+    ctx.fillStyle = 'rgb(0, 0, 0)';  
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Then add semi-transparent layer for trail effect
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    console.log("Drawing visualizer:", activeVisualizer, "Data length:", analyserData.length);
 
     // Determine which visualization to render
     switch (activeVisualizer) {
@@ -108,7 +136,7 @@ const Visualizer: React.FC<VisualizerProps> = ({ analyserData, activeVisualizer 
     
     for (let i = 0; i < data.length; i++) {
       // Amplify the data values for more visible effect
-      const amplifiedValue = Math.min(255, data[i] * 1.5);
+      const amplifiedValue = Math.min(255, data[i] * 2.5);  // Further amplified for better visibility
       const barHeight = (amplifiedValue / 255) * height * 0.8;
       
       // Calculate bar positions for a centered look
@@ -145,7 +173,7 @@ const Visualizer: React.FC<VisualizerProps> = ({ analyserData, activeVisualizer 
     for (let i = 0; i < data.length; i++) {
       const angle = (i / data.length) * Math.PI * 2;
       // Amplify the data values for more visible effect
-      const amplifiedValue = Math.min(255, data[i] * 1.5);
+      const amplifiedValue = Math.min(255, data[i] * 2.5);  // Further amplified
       const amplitude = (amplifiedValue / 255) * maxRadius;
       
       // Calculate points on circle
@@ -180,7 +208,7 @@ const Visualizer: React.FC<VisualizerProps> = ({ analyserData, activeVisualizer 
     for (let i = 0; i < data.length; i++) {
       const x = (i / data.length) * width;
       // Amplify the data values for more visible effect
-      const amplifiedValue = Math.min(255, data[i] * 1.5);
+      const amplifiedValue = Math.min(255, data[i] * 2.5);  // Further amplified
       const y = height / 2 + ((amplifiedValue / 255) * height * 0.4) * Math.sin(i * 0.1 + colorIndex.current);
       
       if (i === 0) {
@@ -214,15 +242,15 @@ const Visualizer: React.FC<VisualizerProps> = ({ analyserData, activeVisualizer 
   const drawParticles = useCallback((ctx: CanvasRenderingContext2D, data: Uint8Array) => {
     const { width, height } = dimensions;
     const averageFrequency = data.reduce((sum, value) => sum + value, 0) / data.length;
-    const intensity = averageFrequency / 255;
+    const intensity = Math.min(1, averageFrequency / 255 * 3);  // Amplify intensity
     
     // Update and draw particles
     for (let i = 0; i < particlesRef.current.length; i++) {
       const particle = particlesRef.current[i];
       
       // Update position with audio reactivity
-      particle.x += particle.speedX * (1 + intensity * 3); // Increased reactivity
-      particle.y += particle.speedY * (1 + intensity * 3); // Increased reactivity
+      particle.x += particle.speedX * (1 + intensity * 5);  // Further increased reactivity
+      particle.y += particle.speedY * (1 + intensity * 5);  // Further increased reactivity
       
       // Wrap around edges
       if (particle.x > width) particle.x = 0;
@@ -232,7 +260,7 @@ const Visualizer: React.FC<VisualizerProps> = ({ analyserData, activeVisualizer 
       
       // Draw particle
       ctx.beginPath();
-      const size = particle.size * (1 + intensity * 2); // Increased size reactivity
+      const size = particle.size * (1 + intensity * 3);  // Increased size reactivity
       ctx.arc(particle.x, particle.y, size, 0, Math.PI * 2);
       ctx.fillStyle = particle.color;
       ctx.globalAlpha = 0.7 + intensity * 0.3;
@@ -296,13 +324,13 @@ const Visualizer: React.FC<VisualizerProps> = ({ analyserData, activeVisualizer 
     };
   }, [draw]);
 
-  // Force the canvas to be in front of all elements
+  // Ensure canvas has proper stacking order and is visible
   return (
     <canvas
       ref={canvasRef}
       width={dimensions.width}
       height={dimensions.height}
-      className="absolute top-0 left-0 z-10"
+      className="absolute top-0 left-0 z-10 pointer-events-none"
     />
   );
 };

@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from 'react';
 
 interface AudioEngineProps {
@@ -27,7 +26,6 @@ const AudioEngine: React.FC<AudioEngineProps> = ({ onAudioProcess }) => {
   const frameRef = useRef<number | null>(null);
   const dataArrayRef = useRef<Uint8Array | null>(null);
 
-  // Initialize Audio Context
   useEffect(() => {
     const initAudio = () => {
       audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -38,9 +36,15 @@ const AudioEngine: React.FC<AudioEngineProps> = ({ onAudioProcess }) => {
       dataArrayRef.current = new Uint8Array(bufferLength);
       
       analyserRef.current.connect(audioContextRef.current.destination);
+      
+      if (dataArrayRef.current) {
+        for (let i = 0; i < dataArrayRef.current.length; i++) {
+          dataArrayRef.current[i] = 50;
+        }
+        onAudioProcess(dataArrayRef.current);
+      }
     };
 
-    // Initialize on first user interaction
     const handleFirstInteraction = () => {
       if (!audioContextRef.current) {
         initAudio();
@@ -51,6 +55,8 @@ const AudioEngine: React.FC<AudioEngineProps> = ({ onAudioProcess }) => {
 
     window.addEventListener('click', handleFirstInteraction);
     window.addEventListener('keydown', handleFirstInteraction);
+    
+    initAudio();
 
     return () => {
       window.removeEventListener('click', handleFirstInteraction);
@@ -64,9 +70,8 @@ const AudioEngine: React.FC<AudioEngineProps> = ({ onAudioProcess }) => {
         audioContextRef.current.close();
       }
     };
-  }, []);
+  }, [onAudioProcess]);
 
-  // Set up animation loop for audio data
   useEffect(() => {
     const updateAnalyser = () => {
       if (analyserRef.current && dataArrayRef.current) {
@@ -87,23 +92,19 @@ const AudioEngine: React.FC<AudioEngineProps> = ({ onAudioProcess }) => {
     };
   }, [onAudioProcess]);
 
-  // Handle keyboard input
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase();
       
-      // Skip if key is already pressed or not in our note map
       if (activeKeys.has(key) || !NOTES[key as keyof typeof NOTES]) {
         return;
       }
 
       if (audioContextRef.current && analyserRef.current) {
-        // Resume audio context if it's suspended (autoplay policy)
         if (audioContextRef.current.state === 'suspended') {
           audioContextRef.current.resume();
         }
 
-        // Create oscillator
         const oscillator = audioContextRef.current.createOscillator();
         const gainNode = audioContextRef.current.createGain();
         
@@ -113,21 +114,23 @@ const AudioEngine: React.FC<AudioEngineProps> = ({ onAudioProcess }) => {
           audioContextRef.current.currentTime
         );
         
-        // Connect nodes
         oscillator.connect(gainNode);
         gainNode.connect(analyserRef.current);
         
-        // Start the sound
         oscillator.start();
         gainNode.gain.setValueAtTime(0, audioContextRef.current.currentTime);
-        gainNode.gain.linearRampToValueAtTime(0.3, audioContextRef.current.currentTime + 0.1);
+        gainNode.gain.linearRampToValueAtTime(0.5, audioContextRef.current.currentTime + 0.1);
         
-        // Store references
         oscillatorsRef.current.set(key, oscillator);
         gainsRef.current.set(key, gainNode);
         
-        // Update active keys
         setActiveKeys(new Set([...activeKeys, key]));
+        
+        if (dataArrayRef.current) {
+          const index = Math.floor(NOTES[key as keyof typeof NOTES] % dataArrayRef.current.length);
+          dataArrayRef.current[index] = 200;
+          onAudioProcess(dataArrayRef.current);
+        }
       }
     };
 
@@ -138,21 +141,17 @@ const AudioEngine: React.FC<AudioEngineProps> = ({ onAudioProcess }) => {
         return;
       }
       
-      // Release the note
       if (audioContextRef.current && oscillatorsRef.current.has(key)) {
         const gainNode = gainsRef.current.get(key);
         
         if (gainNode) {
-          // Create a fade-out effect
           gainNode.gain.linearRampToValueAtTime(0, audioContextRef.current.currentTime + 0.1);
           
-          // Stop and clean up after fade-out
           setTimeout(() => {
             oscillatorsRef.current.get(key)?.stop();
             oscillatorsRef.current.delete(key);
             gainsRef.current.delete(key);
             
-            // Update active keys
             setActiveKeys(prev => {
               const newSet = new Set(prev);
               newSet.delete(key);
@@ -170,9 +169,8 @@ const AudioEngine: React.FC<AudioEngineProps> = ({ onAudioProcess }) => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [activeKeys]);
+  }, [activeKeys, onAudioProcess]);
 
-  // Render a virtual keyboard
   return (
     <div className="fixed bottom-8 left-0 w-full flex items-center justify-center">
       <div className="bg-black/60 backdrop-blur-md p-4 rounded-xl flex">
