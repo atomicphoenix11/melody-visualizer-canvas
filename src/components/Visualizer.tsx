@@ -77,7 +77,7 @@ const Visualizer: React.FC<VisualizerProps> = ({ analyserData, activeVisualizer 
     if (!ctx) return;
 
     // Clear canvas with a semi-transparent background for trail effect
-    ctx.fillStyle = 'rgba(26, 31, 44, 0.2)';
+    ctx.fillStyle = 'rgba(26, 31, 44, 0.05)'; // Made more transparent
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Determine which visualization to render
@@ -295,9 +295,10 @@ const Visualizer: React.FC<VisualizerProps> = ({ analyserData, activeVisualizer 
       ref={canvasRef}
       width={dimensions.width}
       height={dimensions.height}
-      className="absolute top-0 left-0 -z-10"
+      className="absolute top-0 left-0 z-0"
     />
   );
 };
 
 export default Visualizer;
+

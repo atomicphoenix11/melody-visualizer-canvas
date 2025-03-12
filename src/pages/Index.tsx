@@ -19,9 +19,6 @@ const Index = () => {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-visualizer-dark">
-      {/* Background overlay with gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-visualizer-dark to-black opacity-80" />
-      
       {/* Canvas Visualizer */}
       <Visualizer analyserData={analyserData} activeVisualizer={activeVisualizer} />
       
@@ -41,3 +38,4 @@ const Index = () => {
 };
 
 export default Index;
+
