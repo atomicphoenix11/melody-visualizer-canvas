@@ -18,12 +18,12 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-visualizer-dark">
+    <div className="relative min-h-screen overflow-hidden bg-black">
       {/* Canvas Visualizer */}
       <Visualizer analyserData={analyserData} activeVisualizer={activeVisualizer} />
       
       {/* Controls and UI */}
-      <div className="relative z-10">
+      <div className="relative z-20">
         <Title />
         <Controls 
           onChangeVisualizer={handleChangeVisualizer} 
@@ -38,4 +38,3 @@ const Index = () => {
 };
 
 export default Index;
-

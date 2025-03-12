@@ -77,7 +77,7 @@ const Visualizer: React.FC<VisualizerProps> = ({ analyserData, activeVisualizer 
     if (!ctx) return;
 
     // Clear canvas with a semi-transparent background for trail effect
-    ctx.fillStyle = 'rgba(26, 31, 44, 0.05)'; // Made more transparent
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'; // Darker background for better contrast
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Determine which visualization to render
@@ -107,7 +107,9 @@ const Visualizer: React.FC<VisualizerProps> = ({ analyserData, activeVisualizer 
     colorIndex.current = (colorIndex.current + 0.1) % 360;
     
     for (let i = 0; i < data.length; i++) {
-      const barHeight = (data[i] / 255) * height * 0.8;
+      // Amplify the data values for more visible effect
+      const amplifiedValue = Math.min(255, data[i] * 1.5);
+      const barHeight = (amplifiedValue / 255) * height * 0.8;
       
       // Calculate bar positions for a centered look
       const x = i * barWidth + width / 2 - (data.length * barWidth) / 2;
@@ -142,7 +144,9 @@ const Visualizer: React.FC<VisualizerProps> = ({ analyserData, activeVisualizer 
     
     for (let i = 0; i < data.length; i++) {
       const angle = (i / data.length) * Math.PI * 2;
-      const amplitude = (data[i] / 255) * maxRadius;
+      // Amplify the data values for more visible effect
+      const amplifiedValue = Math.min(255, data[i] * 1.5);
+      const amplitude = (amplifiedValue / 255) * maxRadius;
       
       // Calculate points on circle
       const x1 = centerX + Math.cos(angle) * amplitude;
@@ -158,7 +162,7 @@ const Visualizer: React.FC<VisualizerProps> = ({ analyserData, activeVisualizer 
       
       // Draw circles at the endpoints
       ctx.beginPath();
-      const circleSize = Math.max(2, (data[i] / 255) * 8);
+      const circleSize = Math.max(2, (amplifiedValue / 255) * 8);
       ctx.arc(x1, y1, circleSize, 0, Math.PI * 2);
       ctx.fillStyle = getColor(i, data.length);
       ctx.fill();
@@ -175,7 +179,9 @@ const Visualizer: React.FC<VisualizerProps> = ({ analyserData, activeVisualizer 
     // Create wave path
     for (let i = 0; i < data.length; i++) {
       const x = (i / data.length) * width;
-      const y = height / 2 + ((data[i] / 255) * height * 0.4) * Math.sin(i * 0.1 + colorIndex.current);
+      // Amplify the data values for more visible effect
+      const amplifiedValue = Math.min(255, data[i] * 1.5);
+      const y = height / 2 + ((amplifiedValue / 255) * height * 0.4) * Math.sin(i * 0.1 + colorIndex.current);
       
       if (i === 0) {
         ctx.moveTo(x, y);
@@ -215,8 +221,8 @@ const Visualizer: React.FC<VisualizerProps> = ({ analyserData, activeVisualizer 
       const particle = particlesRef.current[i];
       
       // Update position with audio reactivity
-      particle.x += particle.speedX * (1 + intensity * 2);
-      particle.y += particle.speedY * (1 + intensity * 2);
+      particle.x += particle.speedX * (1 + intensity * 3); // Increased reactivity
+      particle.y += particle.speedY * (1 + intensity * 3); // Increased reactivity
       
       // Wrap around edges
       if (particle.x > width) particle.x = 0;
@@ -226,7 +232,7 @@ const Visualizer: React.FC<VisualizerProps> = ({ analyserData, activeVisualizer 
       
       // Draw particle
       ctx.beginPath();
-      const size = particle.size * (1 + intensity);
+      const size = particle.size * (1 + intensity * 2); // Increased size reactivity
       ctx.arc(particle.x, particle.y, size, 0, Math.PI * 2);
       ctx.fillStyle = particle.color;
       ctx.globalAlpha = 0.7 + intensity * 0.3;
@@ -290,15 +296,15 @@ const Visualizer: React.FC<VisualizerProps> = ({ analyserData, activeVisualizer 
     };
   }, [draw]);
 
+  // Force the canvas to be in front of all elements
   return (
     <canvas
       ref={canvasRef}
       width={dimensions.width}
       height={dimensions.height}
-      className="absolute top-0 left-0 z-0"
+      className="absolute top-0 left-0 z-10"
     />
   );
 };
 
 export default Visualizer;
-
