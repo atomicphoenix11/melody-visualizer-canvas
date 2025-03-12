@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Music, Waveform, Circle, Sparkles } from 'lucide-react';
+import { Music, AudioWaveform, Circle, Sparkles } from 'lucide-react';
 
 interface ControlsProps {
   onChangeVisualizer: (visualizer: string) => void;
@@ -12,7 +12,7 @@ const Controls: React.FC<ControlsProps> = ({ onChangeVisualizer, activeVisualize
   const [isOpen, setIsOpen] = useState(true);
 
   const visualizers = [
-    { id: 'bars', name: 'Bars', icon: <Waveform size={18} /> },
+    { id: 'bars', name: 'Bars', icon: <AudioWaveform size={18} /> },
     { id: 'circular', name: 'Circular', icon: <Circle size={18} /> },
     { id: 'wave', name: 'Wave', icon: <Music size={18} /> },
     { id: 'particles', name: 'Particles', icon: <Sparkles size={18} /> },
